@@ -21,16 +21,19 @@ class Author(BaseModel):
 class Comment(BaseModel):
     reddit_id = CharField()
     reddit_name = CharField()
-    subreddit_id = ForeignKeyField(Subreddit)
+    subreddit = ForeignKeyField(Subreddit)
+    author = ForeignKeyField(Author)
     parent_id = CharField()
     link_id = CharField()
-    author_id = ForeignKeyField(Author)
     created_utc = DateTimeField()
     ups = IntegerField()
     downs = IntegerField()
     score = IntegerField()
-    body = CharField()
+    body = TextField()
 
 
 class CommentParent(BaseModel):
+    comment = ForeignKeyField(Comment, related_name='comment')
+    parent_comment = ForeignKeyField(Comment, null=True,
+                                     related_name='parent_comment')
 
