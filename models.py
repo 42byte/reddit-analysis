@@ -15,7 +15,7 @@ class Subreddit(BaseModel):
 
 class Author(BaseModel):
     name = CharField()
-    comments = IntegerField()
+    comments = IntegerField(default=0)
 
 
 class Comment(BaseModel):
