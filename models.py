@@ -1,31 +1,39 @@
 from peewee import *
 
+database = SqliteDatabase('reddit_comments.db')
 
-class Subreddit(Model):
+
+class BaseModel(Model):
+    class Meta:
+        database = database
+
+
+class Subreddit(BaseModel):
     reddit_id = CharField()
     name = CharField()
 
 
-class Author(Model):
+class Author(BaseModel):
     name = CharField()
-    comments = IntegerField()
+    comments = IntegerField(default=0)
 
 
-class Comment(Model):
+class Comment(BaseModel):
     reddit_id = CharField()
     reddit_name = CharField()
-    subreddit_id = ForeignKeyField(Subreddit)
+    subreddit = ForeignKeyField(Subreddit)
+    author = ForeignKeyField(Author)
     parent_id = CharField()
     link_id = CharField()
-    author_id = ForeignKeyField(Author)
     created_utc = DateTimeField()
     ups = IntegerField()
     downs = IntegerField()
     score = IntegerField()
-    body = CharField()
+    body = TextField()
 
 
-class CommentParent(Model):
-    comment_id = ForeignKeyField(Comment)
-    parent_comment_id = ForeignKeyField(Comment)
+class CommentParent(BaseModel):
+    comment = ForeignKeyField(Comment, related_name='comment')
+    parent_comment = ForeignKeyField(Comment, null=True,
+                                     related_name='parent_comment')
 
