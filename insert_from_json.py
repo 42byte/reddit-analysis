@@ -5,40 +5,49 @@ from datetime import datetime
 
 from models import Author, Comment, CommentParent, Subreddit, database
 
-def insert(record):
-    subreddit, _ = Subreddit.create_or_get(reddit_id=record['subreddit_id'],
-                                           name=record['subreddit'])
-    author, _ = Author.create_or_get(name=record['author'])
-    author.comments += 1
-    author.save()
+BATCH_SIZE = 1000
 
-    comment = Comment.create(reddit_id=record['id'],
-                             reddit_name=record['name'],
-                             subreddit=subreddit.id,
-                             author=author.id,
-                             parent_id=record['parent_id'],
-                             link_id=record['link_id'],
-                             created_utc=datetime.fromtimestamp(
-                                 int(record['created_utc'])),
-                             ups=record['ups'],
-                             downs=record['downs'],
-                             score=record['score'],
-                             body=record['body'])
+def insert(records):
+    with database.atomic():
+        for record in records:
+            subreddit, _ = Subreddit.create_or_get(reddit_id=record['subreddit_id'],
+                                                   name=record['subreddit'])
+            author, _ = Author.create_or_get(name=record['author'])
+            author.comments += 1
+            author.save()
 
-    parent = (Comment
-                .select()
-                .where(Comment.reddit_name == comment.parent_id)
-                .first())
-    parent_id = parent.id if parent else None
-    CommentParent.create(comment=comment.id, parent_comment=parent_id)
+            comment = Comment.create(reddit_id=record['id'],
+                                     reddit_name=record['name'],
+                                     subreddit=subreddit.id,
+                                     author=author.id,
+                                     parent_id=record['parent_id'],
+                                     link_id=record['link_id'],
+                                     created_utc=datetime.fromtimestamp(
+                                         int(record['created_utc'])),
+                                     ups=record['ups'],
+                                     downs=record['downs'],
+                                     score=record['score'],
+                                     body=record['body'])
+
+
+def create_heirarchy():
+    # Create the heirarchy between the Comments using a join
+    pass
 
 
 def insert_from_json(filepath):
     count = 0
     with open(filepath) as f:
+        records = []
         for line in f:
             record = json.loads(line)
-            insert(record)
+            records.append(record)
+            if len(records) == BATCH_SIZE:
+                insert(records)
+                records.clear()
+                print('Inserted records {} to {}'.format(
+                    count - BATCH_SIZE + 1, 
+                    count))
             count += 1
     return count
 
