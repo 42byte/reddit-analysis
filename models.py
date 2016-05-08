@@ -1,3 +1,5 @@
+import os
+
 from peewee import *
 from playhouse.pool import PooledPostgresqlExtDatabase
 
@@ -6,8 +8,8 @@ database = PooledPostgresqlExtDatabase(
             'postgres',
             max_connections=32,
             stale_timeout=300,  # 5 minutes.
-            host='localhost', 
-            port=8888,
+            host=os.getenv('POSTGRES_HOST', 'localhost'),
+            port=os.getenv('POSTGRES_PORT', 5432),
             user='postgres', 
             register_hstore=False)
 
