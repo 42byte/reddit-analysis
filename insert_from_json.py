@@ -1,5 +1,6 @@
 import sys
 import json
+import time
 from datetime import datetime
 
 from models import Author, Comment, CommentParent, Subreddit, database
@@ -46,10 +47,13 @@ if __name__ == '__main__':
     if len(sys.argv) != 2:
         exit('USAGE: python insert_from_json.py <json file path>')
 
+    start = time.time()
     database.create_tables(
             [Author, Comment, CommentParent, Subreddit],
             safe=True
     )
     inserted = insert_from_json(sys.argv[1])
-    print('Inserted {} records'.format(inserted))
+    end = time.time()
+    elapsed = end - start 
+    print('Inserted {} records in {}s'.format(inserted, elapsed))
 
