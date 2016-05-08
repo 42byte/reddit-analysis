@@ -1,6 +1,15 @@
 from peewee import *
+from playhouse.pool import PooledPostgresqlExtDatabase
 
-database = SqliteDatabase('reddit_comments.db')
+
+database = PooledPostgresqlExtDatabase(
+            'postgres',
+            max_connections=32,
+            stale_timeout=300,  # 5 minutes.
+            host='localhost', 
+            port=8888,
+            user='postgres', 
+            register_hstore=False)
 
 
 class BaseModel(Model):
