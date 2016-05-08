@@ -1,4 +1,4 @@
-import sys
+import functools
 import json
 import multiprocessing
 import sys
@@ -7,10 +7,12 @@ from datetime import datetime
 
 from models import Author, Comment, CommentParent, Subreddit, database
 
+
 BATCH_SIZE = 5000
 
+
 def insert(records):
-    with database.atomic():
+    with database.execution_context():
         Comment.insert_many(records).execute()
 
 
