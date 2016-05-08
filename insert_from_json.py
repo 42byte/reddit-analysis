@@ -5,29 +5,26 @@ from datetime import datetime
 
 from models import Author, Comment, CommentParent, Subreddit, database
 
-BATCH_SIZE = 1000
+BATCH_SIZE = 5000
 
 def insert(records):
     with database.atomic():
-        for record in records:
-            subreddit, _ = Subreddit.create_or_get(reddit_id=record['subreddit_id'],
-                                                   name=record['subreddit'])
-            author, _ = Author.create_or_get(name=record['author'])
-            author.comments += 1
-            author.save()
+        Comment.insert_many(records).execute()
 
-            comment = Comment.create(reddit_id=record['id'],
-                                     reddit_name=record['name'],
-                                     subreddit=subreddit.id,
-                                     author=author.id,
-                                     parent_id=record['parent_id'],
-                                     link_id=record['link_id'],
-                                     created_utc=datetime.fromtimestamp(
-                                         int(record['created_utc'])),
-                                     ups=record['ups'],
-                                     downs=record['downs'],
-                                     score=record['score'],
-                                     body=record['body'])
+
+def make_comment_dict(record):
+    return dict(reddit_id=record['id'],
+                reddit_name=record['name'],
+                subreddit=None,
+                author=None,
+                parent_id=record['parent_id'],
+                link_id=record['link_id'],
+                created_utc=datetime.fromtimestamp(
+                    int(record['created_utc'])),
+                ups=record['ups'],
+                downs=record['downs'],
+                score=record['score'],
+                body=record['body'])
 
 
 def create_heirarchy():
@@ -40,7 +37,7 @@ def insert_from_json(filepath):
     with open(filepath) as f:
         records = []
         for line in f:
-            record = json.loads(line)
+            record = make_comment_dict(json.loads(line))
             records.append(record)
             if len(records) == BATCH_SIZE:
                 insert(records)
