@@ -1,5 +1,7 @@
 import sys
 import json
+import multiprocessing
+import sys
 import time
 from datetime import datetime
 
@@ -34,18 +36,20 @@ def create_heirarchy():
 
 def insert_from_json(filepath):
     count = 0
+    records = []
     with open(filepath) as f:
-        records = []
-        for line in f:
-            record = make_comment_dict(json.loads(line))
-            records.append(record)
-            if len(records) == BATCH_SIZE:
-                insert(records)
-                records.clear()
-                print('Inserted records {} to {}'.format(
-                    count - BATCH_SIZE + 1, 
-                    count))
-            count += 1
+        with multiprocessing.Pool() as p:
+            for line in f:
+                records.append(make_comment_dict(json.loads(line)))
+                if len(records) == BATCH_SIZE:
+                    msg = ('Inserted records {} to {}'
+                            .format(count - BATCH_SIZE + 1, count))
+                    callback = functools.partial(print, msg)
+                    p.apply_async(insert, (records,), callback=callback)
+                    records = []
+                count += 1
+            p.close()
+            p.join()
     return count
 
 
