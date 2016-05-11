@@ -1,6 +1,17 @@
-from peewee import *
+import os
 
-database = SqliteDatabase('reddit_comments.db')
+from peewee import *
+from playhouse.pool import PooledPostgresqlExtDatabase
+
+
+database = PooledPostgresqlExtDatabase(
+            'postgres',
+            max_connections=32,
+            stale_timeout=300,  # 5 minutes.
+            host=os.getenv('POSTGRES_HOST', 'localhost'),
+            port=os.getenv('POSTGRES_PORT', 5432),
+            user='postgres', 
+            register_hstore=False)
 
 
 class BaseModel(Model):
@@ -21,8 +32,8 @@ class Author(BaseModel):
 class Comment(BaseModel):
     reddit_id = CharField()
     reddit_name = CharField()
-    subreddit = ForeignKeyField(Subreddit)
-    author = ForeignKeyField(Author)
+    subreddit = ForeignKeyField(Subreddit, null=True)
+    author = ForeignKeyField(Author, null=True)
     parent_id = CharField()
     link_id = CharField()
     created_utc = DateTimeField()
